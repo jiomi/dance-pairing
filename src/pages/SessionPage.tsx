@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useRooms } from '../states/useRooms';
 import { useSettings } from '../states/useSettings';
 import { generateRounds } from '../utils/pairing';
-import type { Person } from '../types';
+import type { DanceOrder, Person } from '../types';
 import styles from './SessionPage.module.css';
 
 export default function SessionPage() {
@@ -18,6 +18,7 @@ export default function SessionPage() {
     () => new Set(room?.people.map((p) => p.id) ?? []),
   );
   const [pairByLevel, setPairByLevel] = useState(false);
+  const [danceOrder, setDanceOrder] = useState<DanceOrder>('highest');
   const [iterations, setIterations] = useState(1);
 
   if (!room) {
@@ -52,8 +53,14 @@ export default function SessionPage() {
       iterations,
       pairByLevel,
       settings.levels,
+      { pastSessions: room.sessions, danceOrder },
     );
-    const sessionId = addSession(roomId!, rounds, pairByLevel);
+    const sessionId = addSession(
+      roomId!,
+      rounds,
+      pairByLevel,
+      pairByLevel ? danceOrder : undefined,
+    );
     navigate(`/rooms/${roomId}/sessions/${sessionId}`);
   };
 
@@ -116,6 +123,21 @@ export default function SessionPage() {
               onChange={(e) => setPairByLevel(e.target.checked)}
             />
           </label>
+
+          {pairByLevel && (
+            <label className={styles.optionLabel}>
+              <span>Dance order</span>
+              <select
+                className={styles.select}
+                value={danceOrder}
+                onChange={(e) => setDanceOrder(e.target.value as DanceOrder)}
+              >
+                <option value="highest">Highest level first</option>
+                <option value="lowest">Lowest level first</option>
+                <option value="random">Random</option>
+              </select>
+            </label>
+          )}
 
           <label className={styles.optionLabel}>
             <span>Rounds</span>

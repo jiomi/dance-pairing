@@ -88,14 +88,19 @@ src/
 ## Pairing logic
 
 - Lives in `src/utils/pairing.ts`
-- Must be pure functions; no side effects
-- Three exported functions:
-  - `generatePairs(leaders, followers)` — single random round, no history
-  - `generatePairsByLevel(leaders, followers, levels)` — single round, matched by skill level proximity
-  - `generateRounds(leaders, followers, iterations, pairByLevel, levels)` — multiple rounds with cross-round history tracking to avoid repeats
-- If leaders > followers (or vice versa): the shorter side cycles so everyone dances
-- Uses Fisher-Yates shuffle; tries up to 20 shuffle/rotation combinations and picks the lowest-score result
-- Level scoring: penalises level distance between paired dancers; repeat pairs cost 100 points
+- Must be pure functions; no side effects (other than `Math.random`)
+- Exported functions:
+  - `generatePairs(leaders, followers, options?)` — single random round
+  - `generatePairsByLevel(leaders, followers, levels, options?)` — single round, matched by skill level proximity
+  - `generateRounds(leaders, followers, iterations, pairByLevel, levels, options?)` — multiple rounds
+  - `options: PairingOptions` = `{ pastSessions?, danceOrder? }`; pages pass the room's earlier sessions as `pastSessions`
+  - Helpers exported for tests: `solveAssignment`, `pastSessionCosts`, `spreadRepeatDancers`
+- Each round is a minimum-cost assignment (Hungarian algorithm) over couple costs:
+  - same-session repeat: 1000 per time; previous session: 100 per time, halving per older session (last 8 sessions)
+  - level gap (level mode): 20 per level; random tie-breaker 0–5
+- If leaders ≠ followers, the smaller side gets extra dance slots: minimum number, evenly spread, rotating across rounds
+- Round order: by combined couple level (`danceOrder`: highest/lowest/random) in level mode, random otherwise; then reordered so nobody dances twice in a row when avoidable
+- Reshuffling a session uses only the sessions before it as history
 
 ## Testing
 

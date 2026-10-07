@@ -1,5 +1,5 @@
 import { useLocalStorage } from './useLocalStorage';
-import type { Room, Person, Role, Session, Pair } from '../types';
+import type { Room, Person, Role, Session, Pair, DanceOrder } from '../types';
 
 const STORAGE_KEY = 'dance-pairing:rooms';
 
@@ -61,9 +61,14 @@ export function useRooms() {
     );
   };
 
-  const addSession = (roomId: string, rounds: Pair[][], pairByLevel: boolean): string => {
+  const addSession = (
+    roomId: string,
+    rounds: Pair[][],
+    pairByLevel: boolean,
+    danceOrder?: DanceOrder,
+  ): string => {
     const id = generateId();
-    const session: Session = { id, createdAt: Date.now(), rounds, pairByLevel };
+    const session: Session = { id, createdAt: Date.now(), rounds, pairByLevel, danceOrder };
     setRooms((prev) =>
       prev.map((r) => (r.id === roomId ? { ...r, sessions: [...(r.sessions ?? []), session] } : r)),
     );

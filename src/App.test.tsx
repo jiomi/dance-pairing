@@ -516,6 +516,100 @@ describe('Session page', () => {
       expect(screen.getByText('Pairs')).toBeInTheDocument();
     });
   });
+
+  describe('dance order and history', () => {
+    const people = [
+      { id: 'l1', name: 'Alice', role: 'leader', level: 'Newcomer' },
+      { id: 'l2', name: 'Charlie', role: 'leader', level: 'Advanced' },
+      { id: 'f1', name: 'Bob', role: 'follower', level: 'Newcomer' },
+      { id: 'f2', name: 'Dana', role: 'follower', level: 'Advanced' },
+    ];
+    const byId = Object.fromEntries(people.map((p) => [p.id, p]));
+    const pastSession = (id: string, couples: [string, string][], extra = {}) => ({
+      id,
+      createdAt: 0,
+      rounds: [couples.map(([l, f]) => ({ leader: byId[l], follower: byId[f] }))],
+      ...extra,
+    });
+    const storedSessions = () =>
+      (
+        JSON.parse(localStorage.getItem('dance-pairing:rooms')!) as {
+          sessions: {
+            id: string;
+            danceOrder?: string;
+            rounds: { leader: { id: string }; follower: { id: string } }[][];
+          }[];
+        }[]
+      )[0].sessions;
+    const couplesOf = (round: { leader: { id: string }; follower: { id: string } }[]) =>
+      round.map((p) => `${p.leader.id}-${p.follower.id}`).sort();
+
+    it('shows the dance order choice only when matching by level', async () => {
+      seedRoom(people);
+      const user = userEvent.setup();
+      renderApp(`/rooms/${ROOM_ID}/session`);
+      expect(screen.queryByRole('combobox', { name: /dance order/i })).not.toBeInTheDocument();
+      await user.click(screen.getByRole('checkbox', { name: /match by level/i }));
+      expect(screen.getByRole('combobox', { name: /dance order/i })).toHaveValue('highest');
+    });
+
+    it('lists the lowest-level couple first and saves the choice', async () => {
+      seedRoom(people);
+      const user = userEvent.setup();
+      renderApp(`/rooms/${ROOM_ID}/session`);
+      await user.click(screen.getByRole('checkbox', { name: /match by level/i }));
+      await user.selectOptions(screen.getByRole('combobox', { name: /dance order/i }), 'lowest');
+      await user.click(screen.getByRole('button', { name: /generate pairs/i }));
+
+      const cards = screen.getAllByRole('listitem');
+      expect(cards[0]).toHaveTextContent('Alice');
+      expect(cards[1]).toHaveTextContent('Charlie');
+      expect(storedSessions()[0].danceOrder).toBe('lowest');
+    });
+
+    it('avoids couples from the previous session', async () => {
+      seedRoom(people, [
+        pastSession('s1', [
+          ['l1', 'f1'],
+          ['l2', 'f2'],
+        ]),
+      ]);
+      const user = userEvent.setup();
+      renderApp(`/rooms/${ROOM_ID}/session`);
+      await user.click(screen.getByRole('button', { name: /generate pairs/i }));
+      expect(couplesOf(storedSessions()[1].rounds[0])).toEqual(['l1-f2', 'l2-f1']);
+    });
+
+    it('reshuffles using only sessions before the one being reshuffled', async () => {
+      seedRoom(people, [
+        pastSession('s1', [
+          ['l1', 'f1'],
+          ['l2', 'f2'],
+        ]),
+        pastSession(
+          's2',
+          [
+            ['l1', 'f1'],
+            ['l2', 'f2'],
+          ],
+          { pairByLevel: true, danceOrder: 'lowest' },
+        ),
+        pastSession('s3', [
+          ['l1', 'f2'],
+          ['l2', 'f1'],
+        ]),
+      ]);
+      const user = userEvent.setup();
+      renderApp(`/rooms/${ROOM_ID}/sessions/s2`);
+      await user.click(screen.getByRole('button', { name: /shuffle/i }));
+      // With only s1 as history: repeating its couples costs 2 × 100 = 200, crossing levels
+      // costs 2 × 60 = 120 → cross. If s3 (a later session) were wrongly counted, crossing
+      // would cost 320 and the level-matched couples would win.
+      const s2 = storedSessions().find((s) => s.id === 's2')!;
+      expect(couplesOf(s2.rounds[0])).toEqual(['l1-f2', 'l2-f1']);
+      expect(s2.danceOrder).toBe('lowest');
+    });
+  });
 });
 
 // ─── Settings page ────────────────────────────────────────────────────────────

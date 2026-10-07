@@ -7,9 +7,9 @@ A mobile-first Progressive Web App for managing dance class pairings across mult
 - **Rooms** — Create, rename, and delete rooms (e.g. a class or group)
 - **People** — Add, rename, and remove people per room; assign each a role (`leader` / `follower`) and a skill level
 - **Sessions** — Start a session from a room; deselect absent people, choose the number of rounds, and optionally enable level-based matching before generating pairs
-- **Random pairing** — Leaders and followers are paired randomly across rounds; when numbers are uneven, the shorter side cycles so everyone dances
-- **Level-based pairing** — Optionally pair dancers of similar skill levels, minimising level distance across all pairs in a round
-- **History-aware** — The algorithm tracks pairings across all rounds in a session and avoids repeats wherever possible
+- **Random pairing** — Leaders and followers are paired randomly across rounds; when numbers are uneven, the shorter side gets extra dances (rotating across rounds) so everyone dances
+- **Level-based pairing** — Optionally pair dancers of similar skill levels, and choose the dance order: highest level first, lowest level first, or random
+- **History-aware** — Avoids repeating couples within a session and from previous sessions of the room, with older sessions weighing less
 - **Settings** — Customise the list of skill levels used across all rooms
 - **Persistent** — All data is stored in `localStorage`; no backend required
 
@@ -49,12 +49,27 @@ src/
 
 ## Pairing Algorithm
 
-Given the list of present leaders and followers, for each round:
+Each round is solved as a minimum-cost assignment (Hungarian algorithm), so the
+result is the best possible pairing for the costs below, not the best of a few
+random tries. Every possible leader–follower couple gets a cost:
 
-1. **Random mode**: shuffle both sides with Fisher-Yates; pair them index by index. If one side is longer, the shorter side cycles.
-2. **Level mode**: sort leaders by level (highest first); for each leader, pick the follower who (in priority order): has danced the fewest times this round → has not danced with this leader before → is closest in level.
-3. Both modes try up to 20 shuffle/rotation combinations and keep the attempt with the lowest score (level distance + 100 per repeated pair).
-4. Across rounds, a history map records every leader–follower pairing so the next round can avoid repeats.
+| Cost | Value |
+|------|-------|
+| Already danced together earlier in this session | 1000 per time |
+| Danced together in the previous session | 100 per time, halving for each older session (50, 25, …; last 8 sessions) |
+| Level gap (level mode only) | 20 per level of difference |
+| Random tie-breaker | 0–5 |
+
+When one side is larger, the smaller side gets extra dance slots. Extra slots
+are kept to the minimum, spread evenly, and go first to whoever had the fewest
+extra dances this session.
+
+Couples are then ordered within the round. In level mode the order is by the
+couple's combined level (highest first by default, lowest first, or random);
+otherwise it is random. The order is adjusted so nobody dances twice in a row
+when that can be avoided.
+
+When reshuffling a session, only the sessions before it count as history.
 
 ## Data Model
 
@@ -78,6 +93,7 @@ interface Session {
   createdAt: number;       // ms timestamp
   rounds: Pair[][];        // rounds[roundIndex][pairIndex]
   pairByLevel?: boolean;
+  danceOrder?: 'highest' | 'lowest' | 'random';  // level mode only
 }
 
 interface Room {

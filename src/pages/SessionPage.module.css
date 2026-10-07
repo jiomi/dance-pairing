@@ -132,6 +132,20 @@
   border-color: var(--color-primary);
 }
 
+.select {
+  padding: 2px var(--spacing-xs);
+  background: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  font-size: 0.95rem;
+}
+
+.select:focus {
+  border-color: var(--color-primary);
+}
+
 .summary {
   font-size: 0.85rem;
   color: var(--color-text-muted);

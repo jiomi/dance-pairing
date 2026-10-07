@@ -39,12 +39,18 @@ export default function SessionViewPage() {
   const pairByLevel = session.pairByLevel ?? false;
 
   const reshuffle = () => {
+    // Only sessions before this one count as history when reshuffling it.
+    const pastSessions = room.sessions.slice(
+      0,
+      room.sessions.findIndex((s) => s.id === sessionId),
+    );
     const newRounds = generateRounds(
       sessionLeaders,
       sessionFollowers,
       iterations,
       pairByLevel,
       settings.levels,
+      { pastSessions, danceOrder: session.danceOrder },
     );
     updateSessionRounds(roomId!, sessionId!, newRounds);
   };
