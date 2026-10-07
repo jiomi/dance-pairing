@@ -224,7 +224,7 @@ export function spreadRepeatDancers(pairs: Pair[]): Pair[] {
   return result;
 }
 
-/** Order the couples of a round: by combined level (ties random) or fully random. */
+/** Order the couples of a round: by combined couple level (ties random) or fully random. */
 function orderRound(pairs: Pair[], order: DanceOrder, levels: string[]): Pair[] {
   const shuffled = fisherYates(pairs);
   if (order !== 'random') {
@@ -250,7 +250,7 @@ export function generateRounds(
     sessionCosts: new Map(),
     extraDances: new Map(),
   };
-  const order: DanceOrder = pairByLevel ? (options.danceOrder ?? 'highest') : 'random';
+  const order: DanceOrder = options.danceOrder ?? (pairByLevel ? 'highest' : 'random');
   const rounds: Pair[][] = [];
 
   for (let i = 0; i < iterations; i++) {

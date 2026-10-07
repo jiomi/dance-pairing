@@ -169,7 +169,7 @@
   width: 100%;
   padding: var(--spacing-md);
   background: var(--color-primary);
-  color: #000;
+  color: var(--color-on-primary);
   border-radius: var(--radius-md);
   font-weight: 700;
   font-size: 1rem;

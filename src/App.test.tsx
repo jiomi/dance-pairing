@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, it, expect, vi } from 'vitest';
 import App from './App';
+import { applyStoredTheme, getStoredTheme } from './states/useTheme';
 
 const FUTURE_FLAGS = {
   v7_startTransition: true,
@@ -399,12 +400,13 @@ describe('Session page', () => {
       expect(screen.getByRole('button', { name: /generate pairs/i })).toBeDisabled();
     });
 
-    it('toggles match-by-level option', async () => {
+    it('matches by level by default and can be switched off', async () => {
       const user = userEvent.setup();
       renderApp(`/rooms/${ROOM_ID}/session`);
       const matchCb = screen.getByRole('checkbox', { name: /match by level/i });
-      await user.click(matchCb);
       expect(matchCb).toBeChecked();
+      await user.click(matchCb);
+      expect(matchCb).not.toBeChecked();
     });
 
     it('changes round count via number input', async () => {
@@ -508,12 +510,16 @@ describe('Session page', () => {
       expect(screen.getByText('×2')).toBeInTheDocument();
     });
 
-    it('generates pairs by level when match-by-level is enabled', async () => {
+    it('generates random pairs when match-by-level is switched off', async () => {
       const user = userEvent.setup();
       renderApp(`/rooms/${ROOM_ID}/session`);
       await user.click(screen.getByRole('checkbox', { name: /match by level/i }));
       await user.click(screen.getByRole('button', { name: /generate pairs/i }));
       expect(screen.getByText('Pairs')).toBeInTheDocument();
+      const stored = JSON.parse(localStorage.getItem('dance-pairing:rooms')!) as {
+        sessions: { pairByLevel: boolean }[];
+      }[];
+      expect(stored[0].sessions[0].pairByLevel).toBe(false);
     });
   });
 
@@ -544,20 +550,20 @@ describe('Session page', () => {
     const couplesOf = (round: { leader: { id: string }; follower: { id: string } }[]) =>
       round.map((p) => `${p.leader.id}-${p.follower.id}`).sort();
 
-    it('shows the dance order choice only when matching by level', async () => {
+    it('always shows the dance order choice, random by default', async () => {
       seedRoom(people);
       const user = userEvent.setup();
       renderApp(`/rooms/${ROOM_ID}/session`);
-      expect(screen.queryByRole('combobox', { name: /dance order/i })).not.toBeInTheDocument();
+      const select = screen.getByRole('combobox', { name: /dance order/i });
+      expect(select).toHaveValue('random');
       await user.click(screen.getByRole('checkbox', { name: /match by level/i }));
-      expect(screen.getByRole('combobox', { name: /dance order/i })).toHaveValue('highest');
+      expect(screen.getByRole('combobox', { name: /dance order/i })).toBeInTheDocument();
     });
 
     it('lists the lowest-level couple first and saves the choice', async () => {
       seedRoom(people);
       const user = userEvent.setup();
       renderApp(`/rooms/${ROOM_ID}/session`);
-      await user.click(screen.getByRole('checkbox', { name: /match by level/i }));
       await user.selectOptions(screen.getByRole('combobox', { name: /dance order/i }), 'lowest');
       await user.click(screen.getByRole('button', { name: /generate pairs/i }));
 
@@ -768,5 +774,46 @@ describe('useLocalStorage', () => {
     localStorage.setItem('dance-pairing:rooms', 'not-valid-json');
     renderApp();
     expect(screen.getByText(/no rooms yet/i)).toBeInTheDocument();
+  });
+});
+
+// ─── Theme ────────────────────────────────────────────────────────────────────
+
+describe('Theme switch', () => {
+  beforeEach(() => {
+    delete document.documentElement.dataset.theme;
+  });
+
+  it('is dark by default', () => {
+    renderApp('/');
+    expect(screen.getByRole('switch', { name: /light mode/i })).not.toBeChecked();
+    expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('switches to light mode, saves it, and switches back', async () => {
+    const user = userEvent.setup();
+    renderApp('/');
+    const toggle = screen.getByRole('switch', { name: /light mode/i });
+    await user.click(toggle);
+    expect(toggle).toBeChecked();
+    expect(document.documentElement.dataset.theme).toBe('light');
+    expect(localStorage.getItem('dance-pairing:theme')).toBe('"light"');
+    await user.click(toggle);
+    expect(document.documentElement.dataset.theme).toBe('dark');
+  });
+
+  it('restores the saved theme at startup', () => {
+    localStorage.setItem('dance-pairing:theme', '"light"');
+    expect(getStoredTheme()).toBe('light');
+    applyStoredTheme();
+    expect(document.documentElement.dataset.theme).toBe('light');
+  });
+
+  it('falls back to dark when storage is unavailable', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('blocked');
+    });
+    expect(getStoredTheme()).toBe('dark');
+    vi.restoreAllMocks();
   });
 });

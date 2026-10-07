@@ -34,7 +34,7 @@
 .sessionBtn {
   padding: var(--spacing-sm) var(--spacing-md);
   background: var(--color-primary);
-  color: #000;
+  color: var(--color-on-primary);
   border-radius: var(--radius-sm);
   font-weight: 600;
   font-size: 0.9rem;
@@ -90,7 +90,7 @@
 .addBtn {
   padding: var(--spacing-sm) var(--spacing-md);
   background: var(--color-primary);
-  color: #000;
+  color: var(--color-on-primary);
   border-radius: var(--radius-sm);
   font-weight: 600;
 }

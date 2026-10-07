@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useRooms } from '../states/useRooms';
+import ThemeToggle from '../components/ThemeToggle';
 import type { Room } from '../types';
 import styles from './RoomsPage.module.css';
 
@@ -50,6 +51,7 @@ export default function RoomsPage() {
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>Dance Pairing</h1>
+        <ThemeToggle />
         <Link to="/settings" className={styles.settingsLink} aria-label="Settings">
           ⚙
         </Link>

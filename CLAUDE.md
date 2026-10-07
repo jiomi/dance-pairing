@@ -57,7 +57,8 @@ src/
 
 ## Styling
 
-- Dark theme only (no light mode); colors defined as CSS custom properties in `src/index.css`
+- Dark theme by default, with a light theme toggled from the switch in the Rooms page header (`ThemeToggle`, `useTheme`); colors are CSS custom properties in `src/index.css`, overridden under `:root[data-theme='light']`
+- Never hardcode colors in CSS modules; text on `--color-primary` uses `--color-on-primary`
 - Mobile-first: base styles target small screens, then use `@media (min-width: ...)` for larger
 - Two-column layouts (leaders/followers) collapse to single column at `max-width: 480px`
 - Pages use `max-width: 600–700px` centered with `margin: 0 auto`
@@ -67,11 +68,12 @@ src/
 
 ## State management
 
-- `localStorage` is the single source of truth; two keys:
+- `localStorage` is the single source of truth; three keys:
   - `dance-pairing:rooms` — full `Room[]` array (people + sessions)
   - `dance-pairing:settings` — `Settings` object (configured levels)
+  - `dance-pairing:theme` — `'dark' | 'light'` (applied in `main.tsx` before the first render)
 - Use the `useLocalStorage<T>` generic hook for all persistence
-- Domain hooks: `useRooms` (rooms/people/sessions), `useSettings` (difficulty levels)
+- Domain hooks: `useRooms` (rooms/people/sessions), `useSettings` (difficulty levels), `useTheme` (color theme)
 - No external state library (no Redux, no Zustand)
 - All state mutations are immutable (spread operators)
 
@@ -99,7 +101,8 @@ src/
   - same-session repeat: 1000 per time; previous session: 100 per time, halving per older session (last 8 sessions)
   - level gap (level mode): 20 per level; random tie-breaker 0–5
 - If leaders ≠ followers, the smaller side gets extra dance slots: minimum number, evenly spread, rotating across rounds
-- Round order: by combined couple level (`danceOrder`: highest/lowest/random) in level mode, random otherwise; then reordered so nobody dances twice in a row when avoidable
+- Round order: by combined couple level (`danceOrder`: highest/lowest/random; sessions saved without it use highest in level mode, random otherwise); then reordered so nobody dances twice in a row when avoidable
+- Session page defaults: match by level on, dance order random
 - Reshuffling a session uses only the sessions before it as history
 
 ## Testing

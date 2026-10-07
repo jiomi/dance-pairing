@@ -428,6 +428,22 @@ describe('dance order', () => {
     expect(orders.size).toBeGreaterThan(1);
   });
 
+  it('applies the chosen order in random mode too', () => {
+    const pairs = generateRounds(ls, fs, 1, false, LEVELS, { danceOrder: 'lowest' })[0];
+    const level = (p: Pair) => LEVELS.indexOf(p.leader.level) + LEVELS.indexOf(p.follower.level);
+    const levels = pairs.map(level);
+    expect(levels).toEqual([...levels].sort((a, b) => a - b));
+  });
+
+  it('defaults to random order in random mode', () => {
+    const orders = new Set<string>();
+    for (let trial = 0; trial < 40; trial++) {
+      const [round] = generateRounds(ls, fs, 1, false, LEVELS);
+      orders.add(round.map((p) => p.leader.id).join());
+    }
+    expect(orders.size).toBeGreaterThan(1);
+  });
+
   it('never puts someone’s two dances back to back when avoidable', () => {
     const many = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => leader(id, 'Novice'));
     const few = ['x', 'y', 'z'].map((id) => follower(id, 'Novice'));

@@ -8,9 +8,11 @@ A mobile-first Progressive Web App for managing dance class pairings across mult
 - **People** — Add, rename, and remove people per room; assign each a role (`leader` / `follower`) and a skill level
 - **Sessions** — Start a session from a room; deselect absent people, choose the number of rounds, and optionally enable level-based matching before generating pairs
 - **Random pairing** — Leaders and followers are paired randomly across rounds; when numbers are uneven, the shorter side gets extra dances (rotating across rounds) so everyone dances
-- **Level-based pairing** — Optionally pair dancers of similar skill levels, and choose the dance order: highest level first, lowest level first, or random
+- **Level-based pairing** — Pair dancers of similar skill levels (on by default)
+- **Dance order** — Highest level first, lowest level first, or random (default)
 - **History-aware** — Avoids repeating couples within a session and from previous sessions of the room, with older sessions weighing less
 - **Settings** — Customise the list of skill levels used across all rooms
+- **Light / dark theme** — Switch in the header; dark by default, remembered on the device
 - **Persistent** — All data is stored in `localStorage`; no backend required
 
 ## Tech Stack
@@ -64,9 +66,8 @@ When one side is larger, the smaller side gets extra dance slots. Extra slots
 are kept to the minimum, spread evenly, and go first to whoever had the fewest
 extra dances this session.
 
-Couples are then ordered within the round. In level mode the order is by the
-couple's combined level (highest first by default, lowest first, or random);
-otherwise it is random. The order is adjusted so nobody dances twice in a row
+Couples are then ordered within the round by the chosen dance order: by the
+couple's combined level (highest or lowest first), or random. The order is adjusted so nobody dances twice in a row
 when that can be avoided.
 
 When reshuffling a session, only the sessions before it count as history.
@@ -93,7 +94,7 @@ interface Session {
   createdAt: number;       // ms timestamp
   rounds: Pair[][];        // rounds[roundIndex][pairIndex]
   pairByLevel?: boolean;
-  danceOrder?: 'highest' | 'lowest' | 'random';  // level mode only
+  danceOrder?: 'highest' | 'lowest' | 'random';
 }
 
 interface Room {
@@ -108,6 +109,7 @@ interface Settings {
 }
 ```
 
-Data is stored under two `localStorage` keys:
+Data is stored under three `localStorage` keys:
 - `dance-pairing:rooms` — the full `Room[]` array
 - `dance-pairing:settings` — the `Settings` object
+- `dance-pairing:theme` — `'dark'` or `'light'`

@@ -12,8 +12,10 @@ export interface Pair {
   follower: Person;
 }
 
-/** Order in which matched couples dance within a round (level mode only). */
+/** Order in which couples dance within a round, by combined couple level. */
 export type DanceOrder = 'highest' | 'lowest' | 'random';
+
+export type Theme = 'dark' | 'light';
 
 export interface Session {
   id: string;
@@ -26,7 +28,10 @@ export interface Session {
 export interface PairingOptions {
   /** Earlier sessions of the room, oldest first (same order as `Room.sessions`). */
   pastSessions?: Session[];
-  /** Dance order within each round when pairing by level. Defaults to 'highest'. */
+  /**
+   * Dance order within each round. When omitted (sessions saved before this
+   * option existed): 'highest' in level mode, 'random' otherwise.
+   */
   danceOrder?: DanceOrder;
 }
 
