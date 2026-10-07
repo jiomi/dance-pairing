@@ -81,7 +81,31 @@ export function useRooms() {
         r.id === roomId
           ? {
               ...r,
-              sessions: r.sessions.map((s) => (s.id === sessionId ? { ...s, rounds } : s)),
+              sessions: r.sessions.map((s) =>
+                s.id === sessionId ? { ...s, rounds, donePairs: [] } : s,
+              ),
+            }
+          : r,
+      ),
+    );
+  };
+
+  const togglePairDone = (roomId: string, sessionId: string, pairKey: string): void => {
+    setRooms((prev) =>
+      prev.map((r) =>
+        r.id === roomId
+          ? {
+              ...r,
+              sessions: r.sessions.map((s) => {
+                if (s.id !== sessionId) return s;
+                const done = s.donePairs ?? [];
+                return {
+                  ...s,
+                  donePairs: done.includes(pairKey)
+                    ? done.filter((k) => k !== pairKey)
+                    : [...done, pairKey],
+                };
+              }),
             }
           : r,
       ),
@@ -105,6 +129,7 @@ export function useRooms() {
     changePersonLevel,
     addSession,
     updateSessionRounds,
+    togglePairDone,
     getRoom,
   };
 }

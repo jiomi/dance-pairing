@@ -10,6 +10,7 @@ A mobile-first Progressive Web App for managing dance class pairings across mult
 - **Random pairing** — Leaders and followers are paired randomly across rounds; when numbers are uneven, the shorter side gets extra dances (rotating across rounds) so everyone dances
 - **Level-based pairing** — Pair dancers of similar skill levels (on by default)
 - **Dance order** — Highest level first, lowest level first, or random (default)
+- **Track the class** — The session view is titled with its date (e.g. "Tuesday Nov. 7"); tap a couple to mark it as done
 - **History-aware** — Avoids repeating couples within a session and from previous sessions of the room, with older sessions weighing less
 - **Settings** — Customise the list of skill levels used across all rooms
 - **Light / dark theme** — Switch in the header; dark by default, remembered on the device
@@ -95,6 +96,7 @@ interface Session {
   rounds: Pair[][];        // rounds[roundIndex][pairIndex]
   pairByLevel?: boolean;
   danceOrder?: 'highest' | 'lowest' | 'random';
+  donePairs?: string[];    // "roundIndex:pairIndex" of couples marked done
 }
 
 interface Room {

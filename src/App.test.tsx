@@ -288,7 +288,7 @@ describe('Room page', () => {
       seedRoom([], [makeSession('s1')]);
       renderApp(`/rooms/${ROOM_ID}`);
       await user.click(screen.getByRole('link', { name: /round|pair/i }));
-      expect(screen.getByText('Pairs')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /shuffle/i })).toBeInTheDocument();
       expect(screen.getByText('Alice')).toBeInTheDocument();
       expect(screen.getByText('Bob')).toBeInTheDocument();
     });
@@ -298,7 +298,7 @@ describe('Room page', () => {
       seedRoom([], [makeSession('s1')]);
       renderApp(`/rooms/${ROOM_ID}`);
       await user.click(screen.getByRole('link', { name: /round|pair/i }));
-      expect(screen.getByText('Pairs')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /shuffle/i })).toBeInTheDocument();
       await user.click(screen.getByRole('link', { name: /salsa/i }));
       expect(screen.getByText(/recent sessions/i)).toBeInTheDocument();
     });
@@ -450,7 +450,7 @@ describe('Session page', () => {
 
     it('transitions to pairs phase and shows pairs', async () => {
       await goToPairsPhase();
-      expect(screen.getByText('Pairs')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /shuffle/i })).toBeInTheDocument();
       expect(screen.getByText('Alice')).toBeInTheDocument();
       expect(screen.getByText('Bob')).toBeInTheDocument();
       expect(screen.getByText('↔')).toBeInTheDocument();
@@ -464,12 +464,12 @@ describe('Session page', () => {
     it('reshuffles pairs', async () => {
       const user = await goToPairsPhase();
       await user.click(screen.getByRole('button', { name: /shuffle/i }));
-      expect(screen.getByText('Pairs')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /shuffle/i })).toBeInTheDocument();
     });
 
     it('saves session and navigates back to room from session view', async () => {
       const user = await goToPairsPhase();
-      expect(screen.getByText('Pairs')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /shuffle/i })).toBeInTheDocument();
       await user.click(screen.getByRole('link', { name: /salsa/i }));
       expect(screen.getByText('Salsa')).toBeInTheDocument();
       expect(screen.getByText(/recent sessions/i)).toBeInTheDocument();
@@ -515,7 +515,7 @@ describe('Session page', () => {
       renderApp(`/rooms/${ROOM_ID}/session`);
       await user.click(screen.getByRole('checkbox', { name: /match by level/i }));
       await user.click(screen.getByRole('button', { name: /generate pairs/i }));
-      expect(screen.getByText('Pairs')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /shuffle/i })).toBeInTheDocument();
       const stored = JSON.parse(localStorage.getItem('dance-pairing:rooms')!) as {
         sessions: { pairByLevel: boolean }[];
       }[];
@@ -815,5 +815,107 @@ describe('Theme switch', () => {
     });
     expect(getStoredTheme()).toBe('dark');
     vi.restoreAllMocks();
+  });
+});
+
+// ─── Session view: date title and done couples ────────────────────────────────
+
+describe('Session view', () => {
+  const alice = { id: 'l1', name: 'Alice', role: 'leader', level: 'Novice' };
+  const carl = { id: 'l2', name: 'Carl', role: 'leader', level: 'Novice' };
+  const bob = { id: 'f1', name: 'Bob', role: 'follower', level: 'Novice' };
+  const dana = { id: 'f2', name: 'Dana', role: 'follower', level: 'Novice' };
+  const createdAt = new Date(new Date().getFullYear(), 10, 7, 20, 0).getTime(); // Nov 7, this year
+
+  function seedSession(extra: Record<string, unknown> = {}) {
+    seedRoom(
+      [alice, carl, bob, dana],
+      [
+        {
+          id: 's1',
+          createdAt,
+          rounds: [
+            [
+              { leader: alice, follower: bob },
+              { leader: carl, follower: dana },
+            ],
+          ],
+          ...extra,
+        },
+      ],
+    );
+  }
+  const storedDone = () =>
+    (
+      JSON.parse(localStorage.getItem('dance-pairing:rooms')!) as {
+        sessions: { donePairs?: string[] }[];
+      }[]
+    )[0].sessions[0].donePairs;
+
+  it('titles the view with the session date', () => {
+    seedSession();
+    renderApp(`/rooms/${ROOM_ID}/sessions/s1`);
+    const weekday = new Date(createdAt).toLocaleDateString('en-US', { weekday: 'long' });
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(`${weekday} Nov. 7`);
+  });
+
+  it('marks a couple as done and back when tapped, and saves it', async () => {
+    seedSession();
+    const user = userEvent.setup();
+    renderApp(`/rooms/${ROOM_ID}/sessions/s1`);
+    const couple = screen.getByRole('button', { name: /alice and bob/i });
+    expect(couple).toHaveAttribute('aria-pressed', 'false');
+
+    await user.click(couple);
+    expect(couple).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText('✓ Done')).toBeInTheDocument();
+    expect(storedDone()).toEqual(['0:0']);
+
+    await user.click(couple);
+    expect(couple).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.queryByText('✓ Done')).not.toBeInTheDocument();
+    expect(storedDone()).toEqual([]);
+  });
+
+  it('keeps done couples after leaving and coming back', () => {
+    seedSession({ donePairs: ['0:1'] });
+    renderApp(`/rooms/${ROOM_ID}/sessions/s1`);
+    expect(screen.getByRole('button', { name: /carl and dana, done/i })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('asks before shuffling when couples are done, and keeps them if cancelled', async () => {
+    seedSession({ donePairs: ['0:0'] });
+    vi.mocked(window.confirm).mockReturnValueOnce(false);
+    const user = userEvent.setup();
+    renderApp(`/rooms/${ROOM_ID}/sessions/s1`);
+    await user.click(screen.getByRole('button', { name: /shuffle/i }));
+    expect(window.confirm).toHaveBeenCalledWith(
+      'Shuffling clears the 1 couple marked as done. Continue?',
+    );
+    expect(storedDone()).toEqual(['0:0']);
+  });
+
+  it('clears done couples when the shuffle is confirmed', async () => {
+    seedSession({ donePairs: ['0:0', '0:1'] });
+    const user = userEvent.setup();
+    renderApp(`/rooms/${ROOM_ID}/sessions/s1`);
+    await user.click(screen.getByRole('button', { name: /shuffle/i }));
+    expect(window.confirm).toHaveBeenCalledWith(
+      'Shuffling clears the 2 couples marked as done. Continue?',
+    );
+    expect(storedDone()).toEqual([]);
+    expect(screen.queryByText('✓ Done')).not.toBeInTheDocument();
+  });
+
+  it('shuffles without asking when nothing is done', async () => {
+    seedSession();
+    vi.mocked(window.confirm).mockClear();
+    const user = userEvent.setup();
+    renderApp(`/rooms/${ROOM_ID}/sessions/s1`);
+    await user.click(screen.getByRole('button', { name: /shuffle/i }));
+    expect(window.confirm).not.toHaveBeenCalled();
   });
 });

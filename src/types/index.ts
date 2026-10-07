@@ -23,6 +23,8 @@ export interface Session {
   rounds: Pair[][];
   pairByLevel?: boolean;
   danceOrder?: DanceOrder;
+  /** Couples marked as danced, as "roundIndex:pairIndex" keys. Cleared on reshuffle. */
+  donePairs?: string[];
 }
 
 export interface PairingOptions {

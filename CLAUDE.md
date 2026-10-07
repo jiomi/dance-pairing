@@ -41,7 +41,7 @@ src/
 - `/` — RoomsPage (list, create, delete, rename rooms)
 - `/rooms/:roomId` — RoomPage (people management, session history)
 - `/rooms/:roomId/session` — SessionPage (attendance, pairing config)
-- `/rooms/:roomId/sessions/:sessionId` — SessionViewPage (pairs display, reshuffle)
+- `/rooms/:roomId/sessions/:sessionId` — SessionViewPage (pairs display, done marking, reshuffle)
 - `/settings` — SettingsPage (dance levels management)
 
 ## Code conventions
@@ -86,6 +86,7 @@ src/
 - All add operations clear the input field after submission
 - Empty/whitespace-only inputs are rejected for all create/rename operations
 - Destructive actions guarded by `window.confirm`
+- Session view: title is the session date (`formatSessionDate` in `src/utils/date.ts`, e.g. "Tuesday Nov. 7"; year added for other years); tapping a couple toggles it as done (`Session.donePairs`, keys `"round:pair"`); Shuffle asks for confirmation when couples are done, then clears them
 
 ## Pairing logic
 
