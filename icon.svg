@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="96" fill="#121212"/>
+
+  <!-- Leader (left, purple) -->
+  <!-- Head -->
+  <circle cx="152" cy="148" r="36" fill="#bb86fc"/>
+  <!-- Body -->
+  <ellipse cx="152" cy="260" rx="30" ry="56" fill="#bb86fc"/>
+  <!-- Left arm up -->
+  <line x1="152" y1="220" x2="100" y2="170" stroke="#bb86fc" stroke-width="18" stroke-linecap="round"/>
+  <!-- Right arm (extended toward center) -->
+  <line x1="152" y1="240" x2="218" y2="256" stroke="#bb86fc" stroke-width="18" stroke-linecap="round"/>
+  <!-- Legs -->
+  <line x1="134" y1="316" x2="108" y2="390" stroke="#bb86fc" stroke-width="18" stroke-linecap="round"/>
+  <line x1="170" y1="316" x2="196" y2="390" stroke="#bb86fc" stroke-width="18" stroke-linecap="round"/>
+
+  <!-- Follower (right, pink) -->
+  <!-- Head -->
+  <circle cx="360" cy="148" r="36" fill="#f48fb1"/>
+  <!-- Body -->
+  <ellipse cx="360" cy="260" rx="30" ry="56" fill="#f48fb1"/>
+  <!-- Right arm up -->
+  <line x1="360" y1="220" x2="412" y2="170" stroke="#f48fb1" stroke-width="18" stroke-linecap="round"/>
+  <!-- Left arm (extended toward center) -->
+  <line x1="360" y1="240" x2="294" y2="256" stroke="#f48fb1" stroke-width="18" stroke-linecap="round"/>
+  <!-- Legs -->
+  <line x1="342" y1="316" x2="316" y2="390" stroke="#f48fb1" stroke-width="18" stroke-linecap="round"/>
+  <line x1="378" y1="316" x2="404" y2="390" stroke="#f48fb1" stroke-width="18" stroke-linecap="round"/>
+
+  <!-- Joined hands in the middle -->
+  <circle cx="256" cy="256" r="14" fill="#ffb74d"/>
+</svg>

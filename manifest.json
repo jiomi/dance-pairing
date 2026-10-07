@@ -1,0 +1,19 @@
+{
+  "name": "Dance Pairing",
+  "short_name": "Pairing",
+  "description": "Pair leaders and followers for dance practice sessions",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#121212",
+  "theme_color": "#bb86fc",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
